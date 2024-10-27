@@ -1,11 +1,12 @@
 /*
-	heap
-	This question requires you to implement a binary heap function
+    heap
+    This question requires you to implement a binary heap function
 */
-// I AM NOT DONE
 
 use std::cmp::Ord;
 use std::default::Default;
+use std::fmt::Display;
+use std::result;
 
 pub struct Heap<T>
 where
@@ -36,8 +37,30 @@ where
         self.len() == 0
     }
 
-    pub fn add(&mut self, value: T) {
+    pub fn add(&mut self, value: T)
+    where
+        T: Copy,
+    {
         //TODO
+        self.count += 1;
+        self.items.push(value);
+
+        let mut cur_idx = self.count;
+        let mut par_idx = self.parent_idx(cur_idx);
+
+        while cur_idx > 1 && (self.comparator)(&value, &self.items[par_idx]) {
+            self.items.swap(cur_idx, par_idx);
+            cur_idx = par_idx;
+            par_idx = self.parent_idx(cur_idx);
+        }
+
+        while self.children_present(cur_idx)
+            && (self.comparator)(&self.items[self.smallest_child_idx(cur_idx)], &value)
+        {
+            let chd_idx = self.smallest_child_idx(cur_idx);
+            self.items.swap(cur_idx, chd_idx);
+            cur_idx = chd_idx;
+        }
     }
 
     fn parent_idx(&self, idx: usize) -> usize {
@@ -58,7 +81,18 @@ where
 
     fn smallest_child_idx(&self, idx: usize) -> usize {
         //TODO
-		0
+        println!("{}", self.items.len());
+        let x = self.left_child_idx(idx);
+        if self.len() == self.left_child_idx(idx)
+            || (self.comparator)(
+                &self.items[self.left_child_idx(idx)],
+                &self.items[self.right_child_idx(idx)],
+            )
+        {
+            return self.left_child_idx(idx);
+        } else {
+            return self.right_child_idx(idx);
+        }
     }
 }
 
@@ -79,13 +113,33 @@ where
 
 impl<T> Iterator for Heap<T>
 where
-    T: Default,
+    T: Default + Display,
 {
     type Item = T;
 
     fn next(&mut self) -> Option<T> {
         //TODO
-		None
+        if self.len() == 0 {
+            return None;
+        }
+
+        let result = self.items.swap_remove(1);
+        self.count -= 1;
+        if !self.is_empty() {
+            let mut cur_idx = 1;
+            while self.children_present(cur_idx)
+                && (self.comparator)(
+                    &self.items[self.smallest_child_idx(cur_idx)],
+                    &self.items[cur_idx],
+                )
+            {
+                let chd_idx = self.smallest_child_idx(cur_idx);
+                self.items.swap(cur_idx, chd_idx);
+                cur_idx = chd_idx;
+            }
+        }
+
+        Some(result)
     }
 }
 
